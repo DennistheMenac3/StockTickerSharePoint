@@ -8,7 +8,7 @@
 <style>
    body {
      font-family: 'Segoe UI', sans-serif;
-     background-color: #003366;
+     background-color: #0078D4;
      color: white;
      margin: 0;
      padding: 20px;
@@ -17,7 +17,7 @@
      border-radius: 10px;
      padding: 20px;
      max-width: 500px;
-     background-color: #003366;
+     background-color: #0078D4;
      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
    }
    .stock-info {
@@ -30,7 +30,7 @@
      font-weight: bold;
    }
    .change-up {
-     color: lightgreen;
+     color: #00ff99;
    }
    .change-down {
      color: #ff6666;
@@ -46,12 +46,13 @@
    .buttons button {
      flex: 1;
      background: white;
-     color: #003366;
+     color: #0078D4;
      border: none;
      border-radius: 5px;
-     padding: 5px;
+     padding: 6px 10px;
      cursor: pointer;
      font-weight: bold;
+     font-size: 0.95em;
    }
 </style>
 </head>
@@ -78,51 +79,63 @@
    const apiKey = 'd1sjj91r01qhe5ra9p7gd1sjj91r01qhe5ra9p80';
    const symbol = 'BYD';
    async function fetchQuote() {
-     const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`);
-     const data = await res.json();
-     const current = data.c;
-     const previous = data.pc;
-     const change = (current - previous).toFixed(2);
-     const percent = ((change / previous) * 100).toFixed(2);
-     document.getElementById('price').textContent = `USD ${current.toFixed(2)}`;
-     document.getElementById('change').textContent = `${change >= 0 ? '+' : ''}${change} (${percent}%)`;
-     document.getElementById('change').className = change >= 0 ? 'change-up' : 'change-down';
-     document.getElementById('arrow').textContent = change >= 0 ? '▲' : '▼';
+     try {
+       const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`);
+       const data = await res.json();
+       const current = data.c;
+       const previous = data.pc;
+       const change = (current - previous).toFixed(2);
+       const percent = ((change / previous) * 100).toFixed(2);
+       document.getElementById('price').textContent = `USD ${current.toFixed(2)}`;
+       document.getElementById('change').textContent = `${change >= 0 ? '+' : ''}${change} (${percent}%)`;
+       document.getElementById('change').className = change >= 0 ? 'change-up' : 'change-down';
+       document.getElementById('arrow').textContent = change >= 0 ? '▲' : '▼';
+     } catch (err) {
+       console.error('Error fetching quote:', err);
+     }
    }
    let chart;
    async function updateChart(days) {
-     const now = Math.floor(Date.now() / 1000);
-     const from = now - (days * 86400);
-     const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=D&from=${from}&to=${now}&token=${apiKey}`);
-     const data = await res.json();
-     const labels = data.t.map(t => new Date(t * 1000).toLocaleDateString());
-     const prices = data.c;
-     const ctx = document.getElementById('chart').getContext('2d');
-     if (chart) chart.destroy();
-     chart = new Chart(ctx, {
-       type: 'line',
-       data: {
-         labels: labels,
-         datasets: [{
-           label: 'Price',
-           data: prices,
-           borderColor: 'lightgreen',
-           backgroundColor: 'rgba(144,238,144,0.2)',
-           fill: true,
-           tension: 0.3
-         }]
-       },
-       options: {
-         plugins: { legend: { display: false } },
-         scales: {
-           x: { display: false },
-           y: { display: false }
-         }
+     try {
+       const now = Math.floor(Date.now() / 1000);
+       const from = now - (days * 86400);
+       const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=D&from=${from}&to=${now}&token=${apiKey}`);
+       const data = await res.json();
+       if (data.s !== 'ok' || !data.t || !data.c) {
+         console.warn('Invalid chart data:', data);
+         return;
        }
-     });
+       const labels = data.t.map(t => new Date(t * 1000).toLocaleDateString());
+       const prices = data.c;
+       const ctx = document.getElementById('chart').getContext('2d');
+       if (chart) chart.destroy();
+       chart = new Chart(ctx, {
+         type: 'line',
+         data: {
+           labels: labels,
+           datasets: [{
+             label: 'Price',
+             data: prices,
+             borderColor: '#00ff99',
+             backgroundColor: 'rgba(0, 255, 153, 0.1)',
+             fill: true,
+             tension: 0.3
+           }]
+         },
+         options: {
+           plugins: { legend: { display: false } },
+           scales: {
+             x: { display: false },
+             y: { display: false }
+           }
+         }
+       });
+     } catch (err) {
+       console.error('Error fetching chart:', err);
+     }
    }
    fetchQuote();
-   updateChart(60); // Default on load
+   updateChart(30); // Load 30-day chart by default
 </script>
 </body>
 </html>
