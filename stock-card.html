@@ -8,7 +8,7 @@
 <style>
    body {
      font-family: 'Segoe UI', sans-serif;
-     background-color: #f0f2f5;
+     background-color: #003366;
      color: white;
      margin: 0;
      padding: 20px;
@@ -17,8 +17,9 @@
      border-radius: 10px;
      padding: 20px;
      max-width: 500px;
-     background-color: #0073CE;
-     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+     background-color: #003366;
+     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+     overflow: hidden;
    }
    .stock-info {
      display: flex;
@@ -26,27 +27,14 @@
      align-items: center;
    }
    .price {
-     font: 20pt/20pt 'Segoe UI';
-     padding-left: 10px;
-     padding-top: 10px;
+     font-size: 1.5em;
+     font-weight: bold;
    }
    .change-up {
-     color: #19ef60;
+     color: lightgreen;
    }
    .change-down {
-     color: #f31040;
-   }
-   .labels {
-     display: flex;
-     justify-content: space-between;
-     color: #75FCE4;
-     padding: 10px 10px 0;
-   }
-   .values {
-     display: flex;
-     justify-content: space-between;
-     font-size: 16px;
-     padding: 5px 10px 10px;
+     color: #ff6666;
    }
    .buttons {
      margin-top: 15px;
@@ -64,13 +52,9 @@
      font-weight: bold;
    }
    canvas {
+     width: 100% !important;
+     height: 200px !important;
      margin-top: 20px;
-     background: #fff;
-     border-radius: 5px;
-   }
-   #arrow {
-     font-size: 2em;
-     margin-top: 10px;
    }
 </style>
 </head>
@@ -78,26 +62,20 @@
 <div class="card">
 <div class="stock-info">
 <div>
-<div style="font-weight: bold;">BYD</div>
+<div>BYD</div>
 <div class="price" id="price">USD --</div>
 <div id="change" class="change-up">+-- (--%)</div>
 </div>
-<div id="arrow">▲</div>
+<div>
+<div id="arrow" style="font-size:2em;">▲</div>
 </div>
-<div class="labels">
-<div>Price</div>
-<div>Change</div>
-</div>
-<div class="values">
-<div id="open">USD --</div>
-<div id="rawChange">--</div>
 </div>
 <div class="buttons">
 <button onclick="updateChart(7)">7D</button>
 <button onclick="updateChart(14)">14D</button>
 <button onclick="updateChart(30)">30D</button>
 </div>
-<canvas id="chart" width="360" height="200"></canvas>
+<canvas id="chart"></canvas>
 </div>
 <script>
    const apiKey = 'd1sjj91r01qhe5ra9p7gd1sjj91r01qhe5ra9p80';
@@ -115,10 +93,8 @@
        document.getElementById('change').textContent = `${change >= 0 ? '+' : ''}${change} (${percent}%)`;
        document.getElementById('change').className = change >= 0 ? 'change-up' : 'change-down';
        document.getElementById('arrow').textContent = change >= 0 ? '▲' : '▼';
-       document.getElementById('open').textContent = `USD ${current.toFixed(2)}`;
-       document.getElementById('rawChange').textContent = `${change >= 0 ? '+' : ''}${change}`;
-     } catch (error) {
-       console.error('Quote fetch error:', error);
+     } catch (err) {
+       console.error("Error fetching quote:", err);
      }
    }
    async function updateChart(days) {
@@ -127,7 +103,10 @@
        const from = now - (days * 86400);
        const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=D&from=${from}&to=${now}&token=${apiKey}`);
        const data = await res.json();
-       if (!data || !data.t || !data.c) return;
+       if (!data || data.s !== "ok") {
+         console.error("No chart data available.");
+         return;
+       }
        const labels = data.t.map(t => new Date(t * 1000).toLocaleDateString());
        const prices = data.c;
        const ctx = document.getElementById('chart').getContext('2d');
@@ -139,35 +118,29 @@
            datasets: [{
              label: 'Price',
              data: prices,
-             borderColor: '#75FCE4',
-             backgroundColor: 'rgba(117, 252, 228, 0.2)',
+             borderColor: 'lightgreen',
+             backgroundColor: 'rgba(144,238,144,0.2)',
              fill: true,
              tension: 0.3
            }]
          },
          options: {
-           plugins: {
-             legend: { display: false }
-           },
+           responsive: true,
+           maintainAspectRatio: false,
+           plugins: { legend: { display: false } },
            scales: {
              x: { display: false },
              y: { display: false }
            }
          }
        });
-     } catch (error) {
-       console.error('Chart fetch error:', error);
+     } catch (err) {
+       console.error("Error rendering chart:", err);
      }
    }
-   function autoRefresh() {
-     fetchQuote();
-     updateChart(30); // Default chart
-   }
-   // Auto-refresh every 5 minutes (300000 ms)
-   setInterval(autoRefresh, 300000);
-   // Initial Load
+   // Initialize on load
    fetchQuote();
-   updateChart(30);
+   updateChart(7);
 </script>
 </body>
 </html>
