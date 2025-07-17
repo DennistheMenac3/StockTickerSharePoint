@@ -3,12 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>BYD Stock Ticker</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<title>BYD Stock Card</title>
 <style>
    body {
      font-family: 'Segoe UI', sans-serif;
-     background-color: #003366;
+     background-color: #f0f2f5;
      color: white;
      margin: 0;
      padding: 20px;
@@ -17,8 +16,8 @@
      border-radius: 10px;
      padding: 20px;
      max-width: 500px;
-     background-color: #003366;
-     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+     background-color: #0073CE;
+     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
      overflow: hidden;
    }
    .stock-info {
@@ -27,8 +26,9 @@
      align-items: center;
    }
    .price {
-     font-size: 1.5em;
-     font-weight: bold;
+     font: 20pt/20pt 'Segoe UI';
+     padding-left: 10px;
+     padding-top: 10px;
    }
    .change-up {
      color: lightgreen;
@@ -36,25 +36,17 @@
    .change-down {
      color: #ff6666;
    }
-   .buttons {
-     margin-top: 15px;
+   .arrow {
+     font-size: 2em;
+   }
+   .label {
+     font-size: 0.9em;
+     color: #9fdfff;
+   }
+   .value-row {
      display: flex;
-     gap: 10px;
-   }
-   .buttons button {
-     flex: 1;
-     background: white;
-     color: #003366;
-     border: none;
-     border-radius: 5px;
-     padding: 5px;
-     cursor: pointer;
-     font-weight: bold;
-   }
-   canvas {
-     width: 100% !important;
-     height: 200px !important;
-     margin-top: 20px;
+     justify-content: space-between;
+     margin-top: 15px;
    }
 </style>
 </head>
@@ -62,25 +54,24 @@
 <div class="card">
 <div class="stock-info">
 <div>
-<div>BYD</div>
+<div style="font-size:1.2em;">BYD</div>
 <div class="price" id="price">USD --</div>
 <div id="change" class="change-up">+-- (--%)</div>
 </div>
-<div>
-<div id="arrow" style="font-size:2em;">▲</div>
+<div class="arrow" id="arrow">▲</div>
 </div>
+<div class="value-row">
+<div class="label">Price</div>
+<div class="label">Change</div>
 </div>
-<div class="buttons">
-<button onclick="updateChart(7)">7D</button>
-<button onclick="updateChart(14)">14D</button>
-<button onclick="updateChart(30)">30D</button>
+<div class="value-row">
+<div id="priceValue">USD --</div>
+<div id="changeValue">--</div>
 </div>
-<canvas id="chart"></canvas>
 </div>
 <script>
    const apiKey = 'd1sjj91r01qhe5ra9p7gd1sjj91r01qhe5ra9p80';
    const symbol = 'BYD';
-   let chart;
    async function fetchQuote() {
      try {
        const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`);
@@ -90,57 +81,18 @@
        const change = (current - previous).toFixed(2);
        const percent = ((change / previous) * 100).toFixed(2);
        document.getElementById('price').textContent = `USD ${current.toFixed(2)}`;
+       document.getElementById('priceValue').textContent = `USD ${current.toFixed(2)}`;
        document.getElementById('change').textContent = `${change >= 0 ? '+' : ''}${change} (${percent}%)`;
+       document.getElementById('changeValue').textContent = `${change >= 0 ? '+' : ''}${change}`;
        document.getElementById('change').className = change >= 0 ? 'change-up' : 'change-down';
        document.getElementById('arrow').textContent = change >= 0 ? '▲' : '▼';
-     } catch (err) {
-       console.error("Error fetching quote:", err);
+       document.getElementById('arrow').style.color = change >= 0 ? 'lightgreen' : '#ff6666';
+     } catch (error) {
+       console.error('Error fetching quote:', error);
      }
    }
-   async function updateChart(days) {
-     try {
-       const now = Math.floor(Date.now() / 1000);
-       const from = now - (days * 86400);
-       const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=D&from=${from}&to=${now}&token=${apiKey}`);
-       const data = await res.json();
-       if (!data || data.s !== "ok") {
-         console.error("No chart data available.");
-         return;
-       }
-       const labels = data.t.map(t => new Date(t * 1000).toLocaleDateString());
-       const prices = data.c;
-       const ctx = document.getElementById('chart').getContext('2d');
-       if (chart) chart.destroy();
-       chart = new Chart(ctx, {
-         type: 'line',
-         data: {
-           labels: labels,
-           datasets: [{
-             label: 'Price',
-             data: prices,
-             borderColor: 'lightgreen',
-             backgroundColor: 'rgba(144,238,144,0.2)',
-             fill: true,
-             tension: 0.3
-           }]
-         },
-         options: {
-           responsive: true,
-           maintainAspectRatio: false,
-           plugins: { legend: { display: false } },
-           scales: {
-             x: { display: false },
-             y: { display: false }
-           }
-         }
-       });
-     } catch (err) {
-       console.error("Error rendering chart:", err);
-     }
-   }
-   // Initialize on load
    fetchQuote();
-   updateChart(7);
+   setInterval(fetchQuote, 300000); // Refresh every 5 minutes
 </script>
 </body>
 </html>
