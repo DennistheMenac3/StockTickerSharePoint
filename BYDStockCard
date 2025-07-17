@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BYD Stock Ticker</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+   body {
+     font-family: 'Segoe UI', sans-serif;
+     background-color: #003366;
+     color: white;
+     margin: 0;
+     padding: 20px;
+   }
+   .card {
+     border-radius: 10px;
+     padding: 20px;
+     max-width: 400px;
+     background-color: #003366;
+     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+   }
+   .stock-info {
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+   }
+   .price {
+     font-size: 1.5em;
+     font-weight: bold;
+   }
+   .change-up {
+     color: lightgreen;
+   }
+   .change-down {
+     color: #ff6666;
+   }
+   canvas {
+     margin-top: 20px;
+   }
+   .buttons {
+     margin-top: 15px;
+     display: flex;
+     gap: 10px;
+   }
+   .buttons button {
+     flex: 1;
+     background: white;
+     color: #003366;
+     border: none;
+     border-radius: 5px;
+     padding: 5px;
+     cursor: pointer;
+     font-weight: bold;
+   }
+</style>
+</head>
+<body>
+<div class="card">
+<div class="stock-info">
+<div>
+<div>BYD</div>
+<div class="price" id="price">USD --</div>
+<div id="change" class="change-up">+-- (--%)</div>
+</div>
+<div>
+<div id="arrow" style="font-size:2em;">▲</div>
+</div>
+</div>
+<div class="buttons">
+<button onclick="updateChart(7)">7D</button>
+<button onclick="updateChart(14)">14D</button>
+<button onclick="updateChart(30)">30D</button>
+</div>
+<canvas id="chart" width="360" height="200"></canvas>
+</div>
+<script>
+   const apiKey = 'd1sjj91r01qhe5ra9p7gd1sjj91r01qhe5ra9p80';
+   const symbol = 'BYD';
+   async function fetchQuote() {
+     const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`);
+     const data = await res.json();
+     const current = data.c;
+     const previous = data.pc;
+     const change = (current - previous).toFixed(2);
+     const percent = ((change / previous) * 100).toFixed(2);
+     document.getElementById('price').textContent = `USD ${current.toFixed(2)}`;
+     document.getElementById('change').textContent = `${change >= 0 ? '+' : ''}${change} (${percent}%)`;
+     document.getElementById('change').className = change >= 0 ? 'change-up' : 'change-down';
+     document.getElementById('arrow').textContent = change >= 0 ? '▲' : '▼';
+   }
+   let chart;
+   async function updateChart(days) {
+     const now = Math.floor(Date.now() / 1000);
+     const from = now - (days * 86400);
+     const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=D&from=${from}&to=${now}&token=${apiKey}`);
+     const data = await res.json();
+     const labels = data.t.map(t => new Date(t * 1000).toLocaleDateString());
+     const prices = data.c;
+     const ctx = document.getElementById('chart').getContext('2d');
+     if (chart) chart.destroy();
+     chart = new Chart(ctx, {
+       type: 'line',
+       data: {
+         labels: labels,
+         datasets: [{
+           label: 'Price',
+           data: prices,
+           borderColor: 'lightgreen',
+           backgroundColor: 'rgba(144,238,144,0.2)',
+           fill: true,
+           tension: 0.3
+         }]
+       },
+       options: {
+         plugins: { legend: { display: false } },
+         scales: {
+           x: { display: false },
+           y: { display: false }
+         }
+       }
+     });
+   }
+   fetchQuote();
+   updateChart(30); // Default on load
+</script>
+</body>
+</html>
