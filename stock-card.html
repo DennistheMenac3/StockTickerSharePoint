@@ -8,7 +8,7 @@
 <style>
    body {
      font-family: 'Segoe UI', sans-serif;
-     background-color: #0078D4;
+     background-color: #f0f2f5;
      color: white;
      margin: 0;
      padding: 20px;
@@ -17,7 +17,7 @@
      border-radius: 10px;
      padding: 20px;
      max-width: 500px;
-     background-color: #0078D4;
+     background-color: #0073CE;
      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
    }
    .stock-info {
@@ -26,17 +26,27 @@
      align-items: center;
    }
    .price {
-     font-size: 1.5em;
-     font-weight: bold;
+     font: 20pt/20pt 'Segoe UI';
+     padding-left: 10px;
+     padding-top: 10px;
    }
    .change-up {
-     color: #00ff99;
+     color: #19ef60;
    }
    .change-down {
-     color: #ff6666;
+     color: #f31040;
    }
-   canvas {
-     margin-top: 20px;
+   .labels {
+     display: flex;
+     justify-content: space-between;
+     color: #75FCE4;
+     padding: 10px 10px 0;
+   }
+   .values {
+     display: flex;
+     justify-content: space-between;
+     font-size: 16px;
+     padding: 5px 10px 10px;
    }
    .buttons {
      margin-top: 15px;
@@ -46,13 +56,21 @@
    .buttons button {
      flex: 1;
      background: white;
-     color: #0078D4;
+     color: #003366;
      border: none;
      border-radius: 5px;
-     padding: 6px 10px;
+     padding: 5px;
      cursor: pointer;
      font-weight: bold;
-     font-size: 0.95em;
+   }
+   canvas {
+     margin-top: 20px;
+     background: #fff;
+     border-radius: 5px;
+   }
+   #arrow {
+     font-size: 2em;
+     margin-top: 10px;
    }
 </style>
 </head>
@@ -60,13 +78,19 @@
 <div class="card">
 <div class="stock-info">
 <div>
-<div>BYD</div>
+<div style="font-weight: bold;">BYD</div>
 <div class="price" id="price">USD --</div>
 <div id="change" class="change-up">+-- (--%)</div>
 </div>
-<div>
-<div id="arrow" style="font-size:2em;">▲</div>
+<div id="arrow">▲</div>
 </div>
+<div class="labels">
+<div>Price</div>
+<div>Change</div>
+</div>
+<div class="values">
+<div id="open">USD --</div>
+<div id="rawChange">--</div>
 </div>
 <div class="buttons">
 <button onclick="updateChart(7)">7D</button>
@@ -78,6 +102,7 @@
 <script>
    const apiKey = 'd1sjj91r01qhe5ra9p7gd1sjj91r01qhe5ra9p80';
    const symbol = 'BYD';
+   let chart;
    async function fetchQuote() {
      try {
        const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`);
@@ -90,21 +115,19 @@
        document.getElementById('change').textContent = `${change >= 0 ? '+' : ''}${change} (${percent}%)`;
        document.getElementById('change').className = change >= 0 ? 'change-up' : 'change-down';
        document.getElementById('arrow').textContent = change >= 0 ? '▲' : '▼';
-     } catch (err) {
-       console.error('Error fetching quote:', err);
+       document.getElementById('open').textContent = `USD ${current.toFixed(2)}`;
+       document.getElementById('rawChange').textContent = `${change >= 0 ? '+' : ''}${change}`;
+     } catch (error) {
+       console.error('Quote fetch error:', error);
      }
    }
-   let chart;
    async function updateChart(days) {
      try {
        const now = Math.floor(Date.now() / 1000);
        const from = now - (days * 86400);
        const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=D&from=${from}&to=${now}&token=${apiKey}`);
        const data = await res.json();
-       if (data.s !== 'ok' || !data.t || !data.c) {
-         console.warn('Invalid chart data:', data);
-         return;
-       }
+       if (!data || !data.t || !data.c) return;
        const labels = data.t.map(t => new Date(t * 1000).toLocaleDateString());
        const prices = data.c;
        const ctx = document.getElementById('chart').getContext('2d');
@@ -116,26 +139,35 @@
            datasets: [{
              label: 'Price',
              data: prices,
-             borderColor: '#00ff99',
-             backgroundColor: 'rgba(0, 255, 153, 0.1)',
+             borderColor: '#75FCE4',
+             backgroundColor: 'rgba(117, 252, 228, 0.2)',
              fill: true,
              tension: 0.3
            }]
          },
          options: {
-           plugins: { legend: { display: false } },
+           plugins: {
+             legend: { display: false }
+           },
            scales: {
              x: { display: false },
              y: { display: false }
            }
          }
        });
-     } catch (err) {
-       console.error('Error fetching chart:', err);
+     } catch (error) {
+       console.error('Chart fetch error:', error);
      }
    }
+   function autoRefresh() {
+     fetchQuote();
+     updateChart(30); // Default chart
+   }
+   // Auto-refresh every 5 minutes (300000 ms)
+   setInterval(autoRefresh, 300000);
+   // Initial Load
    fetchQuote();
-   updateChart(30); // Load 30-day chart by default
+   updateChart(30);
 </script>
 </body>
 </html>
