@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Sleek Glass Clock</title>
+<title>Minimal Vegas Clock</title>
 <style>
-  /* SharePoint Clean-up */
+  /* SharePoint Native Integration */
   :host, .canvasZone, .ControlZone {
     background: transparent !important;
     padding: 0 !important;
@@ -15,105 +15,78 @@
 
   body {
     margin: 0;
-    padding: 10px;
-    background-color: transparent;
+    padding: 0;
+    background-color: transparent !important;
     font-family: 'Segoe UI', -apple-system, sans-serif;
-    color: #1a1a1a; /* Professional Deep Black/Grey */
+    color: #000;
   }
 
-  .card {
-    border-radius: 16px;
-    padding: 24px;
+  .container {
     max-width: 400px;
-    /* Translucent Glass Effect */
-    background: rgba(255, 255, 255, 0.25); 
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-    
-    min-height: 160px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    padding: 5px;
+  }
+
+  .location-tag {
+    font-size: 0.75em;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #666;
+    margin-bottom: 2px;
   }
 
   .time-row {
     display: flex;
-    justify-content: space-between;
     align-items: baseline;
+    line-height: 0.9;
   }
 
   #clock {
-    font-size: 3.4em;
+    font-size: 4em; /* Slightly larger to fill the space where the bar was */
     font-weight: 800;
     letter-spacing: -2px;
     margin: 0;
-    color: #111;
+    color: #000;
   }
 
   #ampm {
-    font-size: 1.1em;
+    font-size: 1.4em;
     font-weight: 700;
-    margin-left: 5px;
-    color: #444;
+    margin-left: 8px;
+    color: #222;
   }
 
   .date-row {
-    font-size: 1.2em;
+    font-size: 1.4em;
     font-weight: 600;
-    color: #555;
-    margin-top: -5px;
-  }
-
-  .progress-container {
-    margin-top: 20px;
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 10px;
-    height: 6px;
-    overflow: hidden;
-  }
-
-  #progress-bar {
-    height: 100%;
-    background: #0073CE; /* Matches your stock card accent */
-    width: 0%;
-    transition: width 1s ease;
-  }
-
-  .footer {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.7em;
-    text-transform: uppercase;
-    font-weight: 800;
-    color: #777;
-    margin-top: 8px;
-    letter-spacing: 0.5px;
+    color: #444;
+    margin-top: 10px;
+    letter-spacing: -0.5px;
   }
 </style>
 </head>
 <body>
 
-<div class="card">
+<div class="container">
+  <div class="location-tag">Las Vegas, Nevada</div>
+  
   <div class="time-row">
-    <div>
-      <span id="clock">12:00</span>
-      <span id="ampm">PM</span>
-    </div>
+    <span id="clock">--:--</span>
+    <span id="ampm">--</span>
   </div>
   
   <div class="date-row" id="date">
-    Friday, April 10
+    ----, ----- --
   </div>
-
 </div>
 
 <script>
   function updateTime() {
     const now = new Date();
     
-    // Time Formatting
+    // Time logic
     let hours = now.getHours();
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
@@ -122,14 +95,14 @@
     document.getElementById('clock').textContent = `${hours}:${minutes}`;
     document.getElementById('ampm').textContent = ampm;
 
-    // Date Formatting
+    // Date logic
     const options = { weekday: 'long', month: 'long', day: 'numeric' };
     document.getElementById('date').textContent = now.toLocaleDateString('en-US', options);
-
   }
 
-  setInterval(updateTime, 1000);
+  // Run immediately and then every second for the clock
   updateTime();
+  setInterval(updateTime, 1000);
 </script>
 
 </body>
