@@ -2,68 +2,67 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Minimal Vegas Clock</title>
+<title>Compact Vegas Clock</title>
 <style>
-  /* SharePoint Native Integration */
+  /* Force SharePoint to drop all internal spacing */
   :host, .canvasZone, .ControlZone {
     background: transparent !important;
     padding: 0 !important;
     margin: 0 !important;
-    box-shadow: none !important;
-    border: none !important;
   }
 
   body {
     margin: 0;
-    padding: 0;
+    padding: 0; /* Removed the 5px padding */
     background-color: transparent !important;
     font-family: 'Segoe UI', -apple-system, sans-serif;
     color: #000;
+    overflow: hidden; /* Prevents scrollbars from adding bulk */
   }
 
   .container {
-    max-width: 400px;
     display: flex;
     flex-direction: column;
-    padding: 5px;
+    justify-content: flex-start;
+    align-items: flex-start;
   }
 
   .location-tag {
-    font-size: 0.75em;
-    font-weight: 800;
+    font-size: 11px; /* Smaller to match native Las Vegas tag */
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px;
     color: #666;
-    margin-bottom: 2px;
+    margin-bottom: -2px; /* Pulls the clock up */
   }
 
   .time-row {
     display: flex;
     align-items: baseline;
-    line-height: 0.9;
+    margin-left: -2px; /* Pulls text to the very edge */
   }
 
   #clock {
-    font-size: 4em; /* Slightly larger to fill the space where the bar was */
+    font-size: 3.2em; /* Adjusted for better fit */
     font-weight: 800;
     letter-spacing: -2px;
     margin: 0;
-    color: #000;
+    line-height: 1.1; /* Tightens the vertical space */
   }
 
   #ampm {
-    font-size: 1.4em;
+    font-size: 1.1em;
     font-weight: 700;
-    margin-left: 8px;
-    color: #222;
+    margin-left: 4px;
+    color: #333;
   }
 
   .date-row {
-    font-size: 1.4em;
+    font-size: 1.1em; /* Closer to the native text size */
     font-weight: 600;
     color: #444;
-    margin-top: 10px;
-    letter-spacing: -0.5px;
+    margin-top: -2px; /* Pulls the date up to the time */
+    letter-spacing: -0.3px;
   }
 </style>
 </head>
@@ -85,8 +84,6 @@
 <script>
   function updateTime() {
     const now = new Date();
-    
-    // Time logic
     let hours = now.getHours();
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
@@ -95,12 +92,9 @@
     document.getElementById('clock').textContent = `${hours}:${minutes}`;
     document.getElementById('ampm').textContent = ampm;
 
-    // Date logic
     const options = { weekday: 'long', month: 'long', day: 'numeric' };
     document.getElementById('date').textContent = now.toLocaleDateString('en-US', options);
   }
-
-  // Run immediately and then every second for the clock
   updateTime();
   setInterval(updateTime, 1000);
 </script>
