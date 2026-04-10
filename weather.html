@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Compact Vegas Weather</title>
+<title>HQ Command Weather</title>
 <style>
   /* SharePoint Native Integration */
   :host, .canvasZone, .ControlZone {
@@ -38,8 +38,17 @@
 
   .weather-row {
     display: flex;
-    align-items: baseline;
-    margin-left: -2px;
+    align-items: center;
+    margin-left: -5px;
+  }
+
+  /* Weather Icon Styling */
+  .weather-icon {
+    font-size: 3.5em;
+    margin-right: 10px;
+    line-height: 1;
+    /* This makes it look "cool" and high-end */
+    filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.1));
   }
 
   #temp {
@@ -51,7 +60,7 @@
   }
 
   .condition-area {
-    margin-left: 10px;
+    margin-left: 12px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -60,7 +69,7 @@
   #condition {
     font-size: 1.1em;
     font-weight: 700;
-    color: #333;
+    color: #222;
     line-height: 1;
     text-transform: capitalize;
   }
@@ -76,9 +85,10 @@
 <body>
 
 <div class="container">
-  <div class="location-tag">Las Vegas Weather</div>
+  <div class="location-tag">HQ Neighborhood Weather</div>
   
   <div class="weather-row">
+    <div id="icon" class="weather-icon">☀️</div>
     <div id="temp">--°</div>
     <div class="condition-area">
       <div id="condition">Loading...</div>
@@ -90,36 +100,46 @@
 <script>
   async function fetchWeather() {
     try {
-      // Coordinates for Las Vegas (36.17, -115.14)
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=36.17&longitude=-115.14&current=temperature_2m,apparent_temperature,weather_code&timezone=auto`;
+      // Precise Coordinates for Boyd HQ (Rainbow & Post Rd area)
+      const lat = 36.071;
+      const lon = -115.243;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weather_code,is_day&timezone=auto`;
       
       const res = await fetch(url);
       const data = await res.json();
       
       const currentTemp = Math.round(data.current.temperature_2m);
       const feelsLike = Math.round(data.current.apparent_temperature);
-      
-      // WMO Weather interpretation codes
-      const codes = {
-        0: "Clear Sky",
-        1: "Mainly Clear", 2: "Partly Cloudy", 3: "Overcast",
-        45: "Foggy", 51: "Drizzle", 61: "Rainy", 
-        71: "Snowy", 95: "Thunderstorm"
+      const isDay = data.current.is_day;
+      const code = data.current.weather_code;
+
+      // Icon mapping (Cooler, high-end emoji versions)
+      const weatherMap = {
+        0: { label: "Clear", icon: isDay ? "☀️" : "🌙" },
+        1: { label: "Mainly Clear", icon: isDay ? "🌤️" : "🌙" },
+        2: { label: "Partly Cloudy", icon: isDay ? "⛅" : "☁️" },
+        3: { label: "Overcast", icon: "☁️" },
+        45: { label: "Foggy", icon: "🌫️" },
+        51: { label: "Drizzle", icon: "🌦️" },
+        61: { label: "Rainy", icon: "🌧️" },
+        71: { label: "Snowy", icon: "❄️" },
+        95: { label: "Thunderstorm", icon: "⛈️" }
       };
 
+      const result = weatherMap[code] || { label: "Clear", icon: "☀️" };
+
       document.getElementById('temp').textContent = `${currentTemp}°`;
-      document.getElementById('condition').textContent = codes[data.current.weather_code] || "Clear";
+      document.getElementById('icon').textContent = result.icon;
+      document.getElementById('condition').textContent = result.label;
       document.getElementById('feels-like').textContent = `Feels like ${feelsLike}°`;
 
     } catch (err) {
       console.error("Weather Error:", err);
-      document.getElementById('condition').textContent = "Offline";
     }
   }
 
   fetchWeather();
-  // Refresh every 15 minutes
-  setInterval(fetchWeather, 900000);
+  setInterval(fetchWeather, 900000); // 15 min refresh
 </script>
 
 </body>
