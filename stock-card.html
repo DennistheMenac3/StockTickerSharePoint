@@ -78,24 +78,16 @@ border:none!important;
 </div>
 </div>
 <script>
-  const PROXY_URL = 'https://stock-proxy.dennis-grant91.workers.dev';
-  const symbol = 'BYD';
-
-  async function fetchQuote() {
-    try {
-      // 2. Fetch from the proxy (this adds your key automatically in the background)
-      const res = await fetch(`${PROXY_URL}?symbol=${symbol}`);
-      const data = await res.json();
-
-      // 3. Finnhub returns 'c' for Current Price. 
-      // Even after-hours, it will return the last closing price.
-      if (!data.c || data.c === 0) throw new Error("API Limit or Service Error");
-
-      const current = data.c;
-      const previous = data.pc;
-      const change = (current - previous).toFixed(2);
-      const percent = ((change / previous) * 100).toFixed(2);
-      const isUp = change >= 0;
+   const PROXY_URL = 'https://stock-proxy.dennis-grant91.workers.dev';
+   const symbol = 'BYD';
+   async function fetchQuote() {
+     try {
+       const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`);
+       const data = await res.json();
+       const current = data.c;
+       const previous = data.pc;
+       const change = (current - previous).toFixed(2);
+       const percent = ((change / previous) * 100).toFixed(2);
        document.getElementById('price').textContent = `USD ${current.toFixed(2)}`;
        document.getElementById('priceValue').textContent = `USD ${current.toFixed(2)}`;
        document.getElementById('change').textContent = `${change >= 0 ? '+' : ''}${change} (${percent}%)`;
@@ -112,4 +104,3 @@ border:none!important;
 </script>
 </body>
 </html>
-
