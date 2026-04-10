@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Sleek Command Clock - Compact</title>
+<title>Sleek Glass Clock</title>
 <style>
+  /* SharePoint Clean-up */
   :host, .canvasZone, .ControlZone {
     background: transparent !important;
     padding: 0 !important;
@@ -14,97 +15,134 @@
 
   body {
     margin: 0;
-    padding: 0; /* Removed body padding to save space */
+    padding: 10px;
     background-color: transparent;
-    font-family: 'Segoe UI', sans-serif;
-    color: white;
-    overflow: hidden; /* Prevents scrollbars */
+    font-family: 'Segoe UI', -apple-system, sans-serif;
+    color: #1a1a1a; /* Professional Deep Black/Grey */
   }
 
   .card {
-    border-radius: 10px;
-    padding: 15px 20px; /* Tighter padding */
-    width: auto;
-    background: linear-gradient(135deg, #0073CE 0%, #00569a 100%);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 400px;
+    /* Translucent Glass Effect */
+    background: rgba(255, 255, 255, 0.25); 
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    
+    min-height: 160px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-between;
   }
 
-  .time-display {
+  .time-row {
     display: flex;
+    justify-content: space-between;
     align-items: baseline;
   }
 
   #clock {
-    font-size: 2.8em; /* Scaled down from 3.5 */
+    font-size: 3.4em;
     font-weight: 800;
-    letter-spacing: -1.5px;
-    line-height: 1;
+    letter-spacing: -2px;
+    margin: 0;
+    color: #111;
   }
 
   #ampm {
-    font-size: 1em;
-    font-weight: 600;
-    margin-left: 6px;
-    opacity: 0.8;
+    font-size: 1.1em;
+    font-weight: 700;
+    margin-left: 5px;
+    color: #444;
   }
 
   .date-row {
-    font-size: 1.1em;
+    font-size: 1.2em;
     font-weight: 600;
-    color: #9fdfff;
-    margin-top: 8px;
+    color: #555;
+    margin-top: -5px;
   }
 
-  .location-row {
-    font-size: 0.75em;
-    font-weight: 700;
-    color: #9fdfff;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 6px;
-    display: flex;
-    align-items: center;
-    opacity: 0.8;
-  }
-
-  .location-row::before {
-    content: '';
-    display: inline-block;
-    width: 6px;
+  .progress-container {
+    margin-top: 20px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
     height: 6px;
-    background-color: #4ade80;
-    border-radius: 50%;
-    margin-right: 6px;
-    box-shadow: 0 0 5px #4ade80;
+    overflow: hidden;
+  }
+
+  #progress-bar {
+    height: 100%;
+    background: #0073CE; /* Matches your stock card accent */
+    width: 0%;
+    transition: width 1s ease;
+  }
+
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7em;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: #777;
+    margin-top: 8px;
+    letter-spacing: 0.5px;
   }
 </style>
 </head>
 <body>
 
 <div class="card">
-  <div class="time-display">
-    <span id="clock">--:--</span>
-    <span id="ampm">--</span>
+  <div class="time-row">
+    <div>
+      <span id="clock">12:00</span>
+      <span id="ampm">PM</span>
+    </div>
   </div>
-  <div class="date-row" id="date">Loading...</div>
-  <div class="location-row">Las Vegas, Nevada</div>
+  
+  <div class="date-row" id="date">
+    Friday, April 10
+  </div>
+
+  <div class="progress-container">
+    <div id="progress-bar"></div>
+  </div>
+
+  <div class="footer">
+    <span>Day Progress</span>
+    <span id="percent">0%</span>
+  </div>
 </div>
 
 <script>
   function updateTime() {
     const now = new Date();
+    
+    // Time Formatting
     let hours = now.getHours();
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12 || 12;
+    
     document.getElementById('clock').textContent = `${hours}:${minutes}`;
     document.getElementById('ampm').textContent = ampm;
+
+    // Date Formatting
     const options = { weekday: 'long', month: 'long', day: 'numeric' };
     document.getElementById('date').textContent = now.toLocaleDateString('en-US', options);
+
+    // Day Progress Calculation
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    const progress = ((now - start) / (end - start)) * 100;
+    
+    document.getElementById('progress-bar').style.width = progress + "%";
+    document.getElementById('percent').textContent = Math.round(progress) + "%";
   }
+
   setInterval(updateTime, 1000);
   updateTime();
 </script>
