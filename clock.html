@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Sleek Command Clock</title>
+<title>Sleek Command Clock - Vegas HQ</title>
 <style>
   :host, .canvasZone, .ControlZone {
     background: transparent !important;
@@ -29,7 +29,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-height: 140px; 
+    min-height: 150px; 
   }
 
   .time-display {
@@ -58,6 +58,30 @@
     color: #9fdfff;
     margin-top: 12px;
   }
+
+  .location-row {
+    font-size: 0.85em;
+    font-weight: 700;
+    color: #9fdfff;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    opacity: 0.9;
+  }
+
+  /* Small dot to mimic a GPS indicator */
+  .location-row::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #4ade80; /* Green for "Active/Live" */
+    border-radius: 50%;
+    margin-right: 8px;
+    box-shadow: 0 0 8px #4ade80;
+  }
 </style>
 </head>
 <body>
@@ -68,6 +92,7 @@
     <span id="ampm">--</span>
   </div>
   <div class="date-row" id="date">Loading...</div>
+  <div class="location-row">Las Vegas, Nevada</div>
 </div>
 
 <script>
@@ -88,7 +113,6 @@
     document.getElementById('date').textContent = now.toLocaleDateString('en-US', options);
   }
 
-  // Refresh every second
   setInterval(updateTime, 1000);
   updateTime();
 </script>
