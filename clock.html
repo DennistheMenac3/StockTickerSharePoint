@@ -107,14 +107,6 @@
     Friday, April 10
   </div>
 
-  <div class="progress-container">
-    <div id="progress-bar"></div>
-  </div>
-
-  <div class="footer">
-    <span>Day Progress</span>
-    <span id="percent">0%</span>
-  </div>
 </div>
 
 <script>
@@ -134,13 +126,6 @@
     const options = { weekday: 'long', month: 'long', day: 'numeric' };
     document.getElementById('date').textContent = now.toLocaleDateString('en-US', options);
 
-    // Day Progress Calculation
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-    const progress = ((now - start) / (end - start)) * 100;
-    
-    document.getElementById('progress-bar').style.width = progress + "%";
-    document.getElementById('percent').textContent = Math.round(progress) + "%";
   }
 
   setInterval(updateTime, 1000);
