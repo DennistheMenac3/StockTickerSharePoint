@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Sleek Command Clock - Vegas HQ</title>
+<title>Sleek Command Clock - Compact</title>
 <style>
   :host, .canvasZone, .ControlZone {
     background: transparent !important;
@@ -14,73 +14,71 @@
 
   body {
     margin: 0;
-    padding: 10px;
+    padding: 0; /* Removed body padding to save space */
     background-color: transparent;
     font-family: 'Segoe UI', sans-serif;
     color: white;
+    overflow: hidden; /* Prevents scrollbars */
   }
 
   .card {
-    border-radius: 12px;
-    padding: 24px;
-    max-width: 400px;
+    border-radius: 10px;
+    padding: 15px 20px; /* Tighter padding */
+    width: auto;
     background: linear-gradient(135deg, #0073CE 0%, #00569a 100%);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-height: 150px; 
   }
 
   .time-display {
     display: flex;
     align-items: baseline;
-    margin: 0;
   }
 
   #clock {
-    font-size: 3.5em;
+    font-size: 2.8em; /* Scaled down from 3.5 */
     font-weight: 800;
-    letter-spacing: -2px;
+    letter-spacing: -1.5px;
     line-height: 1;
   }
 
   #ampm {
-    font-size: 1.2em;
+    font-size: 1em;
     font-weight: 600;
-    margin-left: 8px;
+    margin-left: 6px;
     opacity: 0.8;
   }
 
   .date-row {
-    font-size: 1.3em;
+    font-size: 1.1em;
     font-weight: 600;
     color: #9fdfff;
-    margin-top: 12px;
+    margin-top: 8px;
   }
 
   .location-row {
-    font-size: 0.85em;
+    font-size: 0.75em;
     font-weight: 700;
     color: #9fdfff;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-top: 8px;
+    letter-spacing: 1px;
+    margin-top: 6px;
     display: flex;
     align-items: center;
-    opacity: 0.9;
+    opacity: 0.8;
   }
 
-  /* Small dot to mimic a GPS indicator */
   .location-row::before {
     content: '';
     display: inline-block;
-    width: 8px;
-    height: 8px;
-    background-color: #4ade80; /* Green for "Active/Live" */
+    width: 6px;
+    height: 6px;
+    background-color: #4ade80;
     border-radius: 50%;
-    margin-right: 8px;
-    box-shadow: 0 0 8px #4ade80;
+    margin-right: 6px;
+    box-shadow: 0 0 5px #4ade80;
   }
 </style>
 </head>
@@ -98,21 +96,15 @@
 <script>
   function updateTime() {
     const now = new Date();
-    
-    // Time Logic
     let hours = now.getHours();
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12 || 12;
-    
     document.getElementById('clock').textContent = `${hours}:${minutes}`;
     document.getElementById('ampm').textContent = ampm;
-
-    // Date Logic
     const options = { weekday: 'long', month: 'long', day: 'numeric' };
     document.getElementById('date').textContent = now.toLocaleDateString('en-US', options);
   }
-
   setInterval(updateTime, 1000);
   updateTime();
 </script>
