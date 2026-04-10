@@ -2,56 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>BYD Stock Card</title>
 <style>
-  body {
-    font-family: 'Segoe UI', sans-serif;
-    background-color: #f0f2f5;
-    color: white;
-    margin: 0;
-    padding: 20px;
-  }
-  .card {
-    border-radius: 12px;
-    padding: 24px;
-    max-width: 500px;
-    background: linear-gradient(135deg, #0073CE 0%, #00569a 100%);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-    overflow: hidden;
-  }
-  .stock-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    padding-bottom: 15px;
-  }
-  .price {
-    font-size: 2.2em;
-    font-weight: 700;
-    margin-top: 5px;
-  }
-  .change-up { color: #4ade80; }
-  .change-down { color: #ff8787; }
-  .arrow { font-size: 2.5em; }
-  .label {
-    font-size: 0.75em;
-    color: #9fdfff;
-    text-transform: uppercase;
-    font-weight: bold;
-  }
-  .value-row {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 15px;
-  }
-  .val {
-    font-size: 1.1em;
-    font-weight: 600;
-  }
-
-  /* SharePoint Compatibility */
+  /* SharePoint Clean-up */
   :host, .canvasZone, .ControlZone {
     background: transparent !important;
     padding: 0 !important;
@@ -59,47 +12,88 @@
     box-shadow: none !important;
     border: none !important;
   }
+
+  body {
+    margin: 0;
+    padding: 15px;
+    background-color: transparent;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+  }
+
+  .card {
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 400px;
+    background: linear-gradient(135deg, #0073CE 0%, #00569a 100%);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    color: white;
+    overflow: hidden;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+  }
+
+  .symbol { font-size: 1.2em; font-weight: 800; }
+  
+  .main-price { font-size: 2.4em; font-weight: 700; margin: 5px 0; }
+
+  .change-text { font-size: 1.1em; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+
+  .up { color: #4ade80; }
+  .down { color: #ff8787; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+
+  .label { font-size: 0.75em; color: #9fdfff; text-transform: uppercase; font-weight: bold; }
+
+  .val { font-size: 1.1em; font-weight: 600; }
 </style>
 </head>
 <body>
 
-<div class="card">
-  <div class="stock-info">
+<div class="card" id="stockCard">
+  <div class="header">
+    <div class="symbol">BOYD GAMING (BYD)</div>
+    <div id="arrow" style="font-size: 2em;">−</div>
+  </div>
+
+  <div class="main-price" id="price">USD --.--</div>
+  <div id="changeArea" class="change-text">
+    <span id="changeVal">--.-- (--%)</span>
+  </div>
+
+  <div class="grid">
     <div>
-      <div style="font-size:1.2em; font-weight: 800; letter-spacing: 0.5px;">BOYD GAMING (BYD)</div>
-      <div class="price" id="price">USD --.--</div>
-      <div id="change" class="change-up" style="font-weight: 600;">+-- (--%)</div>
+      <div class="label">Live Price</div>
+      <div class="val" id="priceValue">USD --.--</div>
     </div>
-    <div class="arrow" id="arrow">−</div>
-  </div>
-
-  <div class="value-row">
-    <div class="label">Last Close</div>
-    <div class="label">Change</div>
-  </div>
-
-  <div class="value-row">
-    <div class="val" id="priceValue">USD --.--</div>
-    <div class="val" id="changeValue">--.--</div>
+    <div>
+      <div class="label">Day Change</div>
+      <div class="val" id="changeValue">--.--</div>
+    </div>
   </div>
 </div>
 
 <script>
-  // YOUR SECURE CLOUDFLARE URL
+  // YOUR SECURE CLOUDFLARE PROXY
   const PROXY_URL = 'https://stock-proxy.dennis-grant91.workers.dev';
   const symbol = 'BYD';
 
   async function fetchQuote() {
     try {
-      // FIX: Now calling the Proxy instead of Finnhub directly
       const res = await fetch(`${PROXY_URL}?symbol=${symbol}`);
-      
-      if (!res.ok) throw new Error("Proxy connection failed");
+      if (!res.ok) throw new Error("API Offline");
       
       const data = await res.json();
 
-      // Ensure we have data (Finnhub 'c' is the current price)
-      if (!data.c || data.c === 0) throw new Error("Invalid Stock Data");
+      // Ensure we have current price 'c'
+      if (!data.c || data.c === 0) throw new Error("No Data");
 
       const current = data.c;
       const previous = data.pc;
@@ -107,34 +101,37 @@
       const percent = ((change / previous) * 100).toFixed(2);
       const isUp = change >= 0;
 
-      // Update UI elements
+      // Update Header & Main Price
       document.getElementById('price').textContent = `USD ${current.toFixed(2)}`;
       document.getElementById('priceValue').textContent = `USD ${current.toFixed(2)}`;
       
-      const changeEl = document.getElementById('change');
-      changeEl.textContent = `${isUp ? '+' : ''}${change} (${percent}%)`;
-      changeEl.className = isUp ? 'change-up' : 'change-down';
+      // Update Change & Colors
+      const colorClass = isUp ? 'up' : 'down';
+      const arrowIcon = isUp ? '▲' : '▼';
+      const sign = isUp ? '+' : '';
+
+      const changeArea = document.getElementById('changeArea');
+      changeArea.className = `change-text ${colorClass}`;
+      document.getElementById('changeVal').textContent = `${sign}${change} (${percent}%)`;
       
-      const changeValEl = document.getElementById('changeValue');
-      changeValEl.textContent = `${isUp ? '+' : ''}${change}`;
-      changeValEl.style.color = isUp ? '#4ade80' : '#ff8787';
+      const changeValBottom = document.getElementById('changeValue');
+      changeValBottom.textContent = `${sign}${change}`;
+      changeValBottom.className = `val ${colorClass}`;
 
-      const arrowEl = document.getElementById('arrow');
-      arrowEl.textContent = isUp ? '▲' : '▼';
-      arrowEl.style.color = isUp ? '#4ade80' : '#ff8787';
+      const arrow = document.getElementById('arrow');
+      arrow.textContent = arrowIcon;
+      arrow.className = colorClass;
 
-    } catch (error) {
-      console.error('Error fetching quote:', error);
-      // If it fails, we show "Updating..." instead of leaving it blank
-      document.getElementById('price').textContent = "Updating...";
+    } catch (err) {
+      console.error("Stock Card Error:", err);
+      document.getElementById('price').textContent = "Market Closed";
+      document.getElementById('price').style.fontSize = "1.5em";
     }
   }
 
-  // Initial load
   fetchQuote();
-
-  // Refresh every 10 minutes to be safe with API limits (600,000ms)
-  setInterval(fetchQuote, 600000);
+  // Refresh every 5 minutes
+  setInterval(fetchQuote, 300000);
 </script>
 
 </body>
