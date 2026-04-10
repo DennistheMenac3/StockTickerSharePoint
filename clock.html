@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Sleek Command Clock</title>
+<style>
+  :host, .canvasZone, .ControlZone {
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 10px;
+    background-color: transparent;
+    font-family: 'Segoe UI', sans-serif;
+    color: white;
+  }
+
+  .card {
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 400px;
+    background: linear-gradient(135deg, #0073CE 0%, #00569a 100%);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .time-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  #clock {
+    font-size: 3.2em;
+    font-weight: 800;
+    letter-spacing: -2px;
+    margin: 0;
+  }
+
+  #ampm {
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-left: 5px;
+    opacity: 0.8;
+  }
+
+  .date-row {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #9fdfff;
+    margin-top: -5px;
+  }
+
+  .progress-container {
+    margin-top: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    height: 8px;
+    overflow: hidden;
+  }
+
+  #progress-bar {
+    height: 100%;
+    background: #4ade80;
+    width: 0%;
+    transition: width 1s ease;
+  }
+
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #9fdfff;
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="time-row">
+    <div>
+      <span id="clock">12:00</span>
+      <span id="ampm">PM</span>
+    </div>
+  </div>
+  
+  <div class="date-row" id="date">
+    Friday, April 10
+  </div>
+
+  <div class="progress-container">
+    <div id="progress-bar"></div>
+  </div>
+
+  <div class="footer">
+    <span>Day Progress</span>
+    <span id="percent">0%</span>
+  </div>
+</div>
+
+<script>
+  function updateTime() {
+    const now = new Date();
+    
+    // Time Formatting
+    let hours = now.getHours();
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+    
+    document.getElementById('clock').textContent = `${hours}:${minutes}`;
+    document.getElementById('ampm').textContent = ampm;
+
+    // Date Formatting
+    const options = { weekday: 'long', month: 'long', day: 'numeric' };
+    document.getElementById('date').textContent = now.toLocaleDateString('en-US', options);
+
+    // Day Progress Calculation
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    const progress = ((now - start) / (end - start)) * 100;
+    
+    document.getElementById('progress-bar').style.width = progress + "%";
+    document.getElementById('percent').textContent = Math.round(progress) + "%";
+  }
+
+  setInterval(updateTime, 1000);
+  updateTime();
+</script>
+
+</body>
+</html>
