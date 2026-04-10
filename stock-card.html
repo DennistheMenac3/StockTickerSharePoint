@@ -5,161 +5,104 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>BYD Stock Card</title>
 <style>
-  :host, .canvasZone, .ControlZone {
-    background: transparent !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    box-shadow: none !important;
-    border: none !important;
-  }
-
-  body {
-    font-family: 'Segoe UI', sans-serif;
-    background-color: #f0f2f5;
-    margin: 0;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-  }
-
-  .card {
-    border-radius: 12px;
-    padding: 24px;
-    width: 100%;
-    max-width: 450px;
-    background: linear-gradient(135deg, #0073CE 0%, #00569a 100%);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-    color: white;
-  }
-
-  .stock-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    padding-bottom: 15px;
-  }
-
-  .symbol-label {
-    font-size: 1.4em;
-    font-weight: 800;
-    letter-spacing: 1px;
-    opacity: 0.9;
-  }
-
-  .price {
-    font-size: 2.2em;
-    font-weight: 700;
-    margin-top: 5px;
-  }
-
-  .change-up { color: #4ade80; }
-  .change-down { color: #ff8787; }
-
-  .arrow {
-    font-size: 2.5em;
-    line-height: 1;
-  }
-
-  .value-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    margin-top: 20px;
-    gap: 10px;
-  }
-
-  .label {
-    font-size: 0.75em;
-    color: #9fdfff;
-    text-transform: uppercase;
-    font-weight: 700;
-  }
-
-  .val-display {
-    font-size: 1.1em;
-    font-weight: 600;
-    margin-top: 4px;
-  }
+   body {
+     font-family: 'Segoe UI', sans-serif;
+     background-color: #f0f2f5;
+     color: white;
+     margin: 0;
+     padding: 20px;
+   }
+   .card {
+     border-radius: 10px;
+     padding: 20px;
+     max-width: 500px;
+     background-color: #0073CE;
+     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+     overflow: hidden;
+   }
+   .stock-info {
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+   }
+   .price {
+     font: 20pt/20pt 'Segoe UI';
+     padding-left: 10px;
+     padding-top: 10px;
+   }
+   .change-up {
+     color: lightgreen;
+   }
+   .change-down {
+     color: #ff6666;
+   }
+   .arrow {
+     font-size: 2em;
+   }
+   .label {
+     font-size: 0.9em;
+     color: #9fdfff;
+   }
+   .value-row {
+     display: flex;
+     justify-content: space-between;
+     margin-top: 15px;
+   }
+/*Remove SharePoint White Borders/padding/margins*/
+:host,canvasZone,.ControlZone{
+background:transparent !important;
+padding:0 !important;
+margin:0 !important;
+box-shadow:none !important;
+border:none!important;
+}
 </style>
 </head>
 <body>
-
-<div class="card" id="stockCard">
-  <div class="stock-info">
-    <div>
-      <div class="symbol-label">BOYD GAMING (BYD)</div>
-      <div class="price" id="price">USD --.--</div>
-      <div id="change" class="change-up" style="font-weight: 600;">+0.00 (0.00%)</div>
-    </div>
-    <div class="arrow" id="arrow">−</div>
-  </div>
-
-  <div class="value-grid">
-    <div>
-      <div class="label">Live Price</div>
-      <div class="val-display" id="priceValue">USD --.--</div>
-    </div>
-    <div>
-      <div class="label">Day Change</div>
-      <div class="val-display" id="changeValue">--.--</div>
-    </div>
-  </div>
+<div class="card">
+<div class="stock-info">
+<div>
+<div style="font-size:1.2em;">BYD</div>
+<div class="price" id="price">USD --</div>
+<div id="change" class="change-up">+-- (--%)</div>
 </div>
-
+<div class="arrow" id="arrow">▲</div>
+</div>
+<div class="value-row">
+<div class="label">Price</div>
+<div class="label">Change</div>
+</div>
+<div class="value-row">
+<div id="priceValue">USD --</div>
+<div id="changeValue">--</div>
+</div>
+</div>
 <script>
-  // Pointing to your secure proxy
-  const PROXY_URL = 'https://stock-proxy.dennis-grant91.workers.dev';
-  
-  // Back to the NYSE ticker for Boyd Gaming
-  const symbol = 'BYD'; 
-
-  async function fetchQuote() {
-    const priceEl = document.getElementById('price');
-    const priceValEl = document.getElementById('priceValue');
-    const changeEl = document.getElementById('change');
-    const changeValEl = document.getElementById('changeValue');
-    const arrowEl = document.getElementById('arrow');
-
-    try {
-      const res = await fetch(`${PROXY_URL}?symbol=${symbol}`);
-      const data = await res.json();
-
-      if (!data.c || data.c === 0) {
-        priceEl.textContent = "Data Error";
-        return;
-      }
-
-      const current = data.c;
-      const previous = data.pc;
-      const change = (current - previous).toFixed(2);
-      const percent = ((change / previous) * 100).toFixed(2);
-      const isUp = change >= 0;
-
-      const color = isUp ? '#4ade80' : '#ff8787';
-      const arrow = isUp ? '▲' : '▼';
-      const prefix = isUp ? '+' : '';
-
-      priceEl.textContent = `USD ${current.toFixed(2)}`;
-      priceValEl.textContent = `USD ${current.toFixed(2)}`;
-      
-      changeEl.textContent = `${prefix}${change} (${percent}%)`;
-      changeEl.className = isUp ? 'change-up' : 'change-down';
-      
-      changeValEl.textContent = `${prefix}${change}`;
-      changeValEl.style.color = color;
-
-      arrowEl.textContent = arrow;
-      arrowEl.style.color = color;
-
-    } catch (error) {
-      console.error('Fetch Error:', error);
-      priceEl.textContent = "Service Offline";
-    }
-  }
-
-  fetchQuote();
-  setInterval(fetchQuote, 30); // 5 min refresh
+   const PROXY_URL = 'https://stock-proxy.dennis-grant91.workers.dev';
+   const symbol = 'BYD';
+   async function fetchQuote() {
+     try {
+       const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`);
+       const data = await res.json();
+       const current = data.c;
+       const previous = data.pc;
+       const change = (current - previous).toFixed(2);
+       const percent = ((change / previous) * 100).toFixed(2);
+       document.getElementById('price').textContent = `USD ${current.toFixed(2)}`;
+       document.getElementById('priceValue').textContent = `USD ${current.toFixed(2)}`;
+       document.getElementById('change').textContent = `${change >= 0 ? '+' : ''}${change} (${percent}%)`;
+       document.getElementById('changeValue').textContent = `${change >= 0 ? '+' : ''}${change}`;
+       document.getElementById('change').className = change >= 0 ? 'change-up' : 'change-down';
+       document.getElementById('arrow').textContent = change >= 0 ? '▲' : '▼';
+       document.getElementById('arrow').style.color = change >= 0 ? 'lightgreen' : '#ff6666';
+     } catch (error) {
+       console.error('Error fetching quote:', error);
+     }
+   }
+   fetchQuote();
+   setInterval(fetchQuote, 300000); // Refresh every 5 minutes
 </script>
-
 </body>
 </html>
+
+update the entire code with all the changes needed to make sure it runs with out lagging or being blank and has a constant value showing and updates every 5-10 minutes. and add what you need to the script from the workers.dev picture I provided. 
