@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Vegas Pro Dashboard</title>
+<title>Centered Vegas Dashboard</title>
 <style>
   :host, .canvasZone, .ControlZone {
     background: transparent !important;
@@ -17,13 +17,19 @@
     font-family: 'Segoe UI', -apple-system, sans-serif;
     color: #000;
     overflow: hidden;
+    /* Centers the entire container horizontally in the SharePoint box */
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
   }
 
   .container {
     display: flex;
     flex-direction: column;
+    align-items: center; /* Centers all child elements */
+    text-align: center;
     max-width: 500px;
-    padding: 5px;
+    padding-top: 5px;
   }
 
   .location-tag {
@@ -38,13 +44,15 @@
   .main-content {
     display: flex;
     align-items: center;
-    gap: 30px;
+    justify-content: center;
+    gap: 35px; /* Balanced space between Time and Weather */
   }
 
-  /* Left Side: Time & Date */
+  /* Time Section */
   .time-section {
     display: flex;
     flex-direction: column;
+    align-items: center;
   }
 
   .time-row {
@@ -74,13 +82,11 @@
     margin-top: 5px;
   }
 
-  /* Right Side: Visual Weather */
+  /* Weather Section */
   .weather-section {
     display: flex;
     align-items: center;
     gap: 12px;
-    border-left: 1px solid rgba(0,0,0,0.1);
-    padding-left: 25px;
   }
 
   #weather-icon {
@@ -91,6 +97,7 @@
   .temp-group {
     display: flex;
     flex-direction: column;
+    align-items: center;
   }
 
   #temp {
@@ -103,7 +110,7 @@
   #condition {
     font-size: 0.9em;
     font-weight: 700;
-    color: #0073CE; /* Blue accent */
+    color: #0073CE; /* Blue accent matching your Boyd card */
     text-transform: uppercase;
     margin-top: 2px;
   }
@@ -124,8 +131,7 @@
     </div>
 
     <div class="weather-section">
-      <div id="weather-icon">
-        </div>
+      <div id="weather-icon"></div>
       <div class="temp-group">
         <div id="temp">--°</div>
         <div id="condition">Loading...</div>
@@ -135,7 +141,6 @@
 </div>
 
 <script>
-  // Icon Library (Standard Weather SVGs)
   const icons = {
     sun: `<svg viewBox="0 0 24 24" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></svg>`,
     moon: `<svg viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`,
@@ -149,10 +154,8 @@
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12 || 12;
-    
     document.getElementById('clock').textContent = `${hours}:${minutes}`;
     document.getElementById('ampm').textContent = ampm;
-
     const options = { weekday: 'long', month: 'long', day: 'numeric' };
     document.getElementById('date').textContent = now.toLocaleDateString('en-US', options);
   }
@@ -162,36 +165,16 @@
       const url = `https://api.open-meteo.com/v1/forecast?latitude=36.17&longitude=-115.14&current=temperature_2m,is_day,weather_code&temperature_unit=fahrenheit&timezone=auto`;
       const res = await fetch(url);
       const data = await res.json();
-      
       const isDay = data.current.is_day === 1;
       const code = data.current.weather_code;
-
       document.getElementById('temp').textContent = `${Math.round(data.current.temperature_2m)}°`;
       
-      // Logic for changing Icon + Text
-      let iconHtml = "";
-      let conditionText = "";
-
-      if (code === 0) {
-        iconHtml = isDay ? icons.sun : icons.moon;
-        conditionText = "Clear";
-      } else if (code <= 3) {
-        iconHtml = icons.cloud;
-        conditionText = "Partly Cloudy";
-      } else if (code >= 51) {
-        iconHtml = icons.rain;
-        conditionText = "Rainy";
-      } else {
-        iconHtml = icons.cloud;
-        conditionText = "Cloudy";
-      }
+      let iconHtml = code === 0 ? (isDay ? icons.sun : icons.moon) : (code <= 3 ? icons.cloud : icons.rain);
+      let conditionText = code === 0 ? "Clear" : (code <= 3 ? "Partly Cloudy" : "Rainy");
 
       document.getElementById('weather-icon').innerHTML = iconHtml;
       document.getElementById('condition').textContent = conditionText;
-
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   }
 
   updateTime();
