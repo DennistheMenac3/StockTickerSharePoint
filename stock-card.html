@@ -4,7 +4,6 @@
 <meta charset="UTF-8" />
 <title>BYD Stock Card</title>
 <style>
-  /* SharePoint Clean-up */
   :host, .canvasZone, .ControlZone {
     background: transparent !important;
     padding: 0 !important;
@@ -27,7 +26,6 @@
     background: linear-gradient(135deg, #0073CE 0%, #00569a 100%);
     box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     color: white;
-    overflow: hidden;
   }
 
   .header {
@@ -40,18 +38,14 @@
   }
 
   .symbol { font-size: 1.2em; font-weight: 800; }
-  
   .main-price { font-size: 2.4em; font-weight: 700; margin: 5px 0; }
-
   .change-text { font-size: 1.1em; font-weight: 600; display: flex; align-items: center; gap: 6px; }
 
   .up { color: #4ade80; }
   .down { color: #ff8787; }
 
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-
   .label { font-size: 0.75em; color: #9fdfff; text-transform: uppercase; font-weight: bold; }
-
   .val { font-size: 1.1em; font-weight: 600; }
 </style>
 </head>
@@ -70,7 +64,7 @@
 
   <div class="grid">
     <div>
-      <div class="label">Live Price</div>
+      <div class="label">Last Known Price</div>
       <div class="val" id="priceValue">USD --.--</div>
     </div>
     <div>
@@ -81,57 +75,70 @@
 </div>
 
 <script>
-  // YOUR SECURE CLOUDFLARE PROXY
   const PROXY_URL = 'https://stock-proxy.dennis-grant91.workers.dev';
   const symbol = 'BYD';
+
+  // Helper function to update the UI
+  function updateUI(data) {
+    const isUp = data.change >= 0;
+    const colorClass = isUp ? 'up' : 'down';
+    const arrowIcon = isUp ? '▲' : '▼';
+    const sign = isUp ? '+' : '';
+
+    document.getElementById('price').textContent = `USD ${data.current}`;
+    document.getElementById('priceValue').textContent = `USD ${data.current}`;
+    
+    const changeArea = document.getElementById('changeArea');
+    changeArea.className = `change-text ${colorClass}`;
+    document.getElementById('changeVal').textContent = `${sign}${data.change} (${data.percent}%)`;
+    
+    const changeValBottom = document.getElementById('changeValue');
+    changeValBottom.textContent = `${sign}${data.change}`;
+    changeValBottom.className = `val ${colorClass}`;
+
+    const arrow = document.getElementById('arrow');
+    arrow.textContent = arrowIcon;
+    arrow.className = colorClass;
+  }
 
   async function fetchQuote() {
     try {
       const res = await fetch(`${PROXY_URL}?symbol=${symbol}`);
-      if (!res.ok) throw new Error("API Offline");
+      if (!res.ok) throw new Error("Network issue");
       
-      const data = await res.json();
+      const rawData = await res.json();
+      if (!rawData.c || rawData.c === 0) throw new Error("Invalid data");
 
-      // Ensure we have current price 'c'
-      if (!data.c || data.c === 0) throw new Error("No Data");
-
-      const current = data.c;
-      const previous = data.pc;
-      const change = (current - previous).toFixed(2);
+      // Format the data
+      const current = rawData.c.toFixed(2);
+      const previous = rawData.pc;
+      const change = (rawData.c - previous).toFixed(2);
       const percent = ((change / previous) * 100).toFixed(2);
-      const isUp = change >= 0;
 
-      // Update Header & Main Price
-      document.getElementById('price').textContent = `USD ${current.toFixed(2)}`;
-      document.getElementById('priceValue').textContent = `USD ${current.toFixed(2)}`;
-      
-      // Update Change & Colors
-      const colorClass = isUp ? 'up' : 'down';
-      const arrowIcon = isUp ? '▲' : '▼';
-      const sign = isUp ? '+' : '';
+      const stockData = { current, change, percent };
 
-      const changeArea = document.getElementById('changeArea');
-      changeArea.className = `change-text ${colorClass}`;
-      document.getElementById('changeVal').textContent = `${sign}${change} (${percent}%)`;
-      
-      const changeValBottom = document.getElementById('changeValue');
-      changeValBottom.textContent = `${sign}${change}`;
-      changeValBottom.className = `val ${colorClass}`;
+      // Save to localStorage so it persists even if you refresh while offline
+      localStorage.setItem('last_byd_data', JSON.stringify(stockData));
 
-      const arrow = document.getElementById('arrow');
-      arrow.textContent = arrowIcon;
-      arrow.className = colorClass;
+      // Update the screen
+      updateUI(stockData);
+      console.log("Stock updated successfully.");
 
     } catch (err) {
-      console.error("Stock Card Error:", err);
-      document.getElementById('price').textContent = "Market Closed";
-      document.getElementById('price').style.fontSize = "1.5em";
+      // IF FAIL: We do nothing to the UI. The old values stay on screen.
+      console.warn("Fetch failed, keeping previous data:", err);
     }
   }
 
+  // ON LOAD: Check if we have saved data first so it's never blank
+  const savedData = localStorage.getItem('last_byd_data');
+  if (savedData) {
+    updateUI(JSON.parse(savedData));
+  }
+
+  // Start the cycle
   fetchQuote();
-  // Refresh every 5 minutes
-  setInterval(fetchQuote, 300000);
+  setInterval(fetchQuote, 300000); // 5 minutes
 </script>
 
 </body>
