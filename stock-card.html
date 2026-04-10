@@ -14,7 +14,7 @@
   }
 
   body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', sans-serif;
     background-color: #f0f2f5;
     margin: 0;
     padding: 20px;
@@ -30,7 +30,6 @@
     background: linear-gradient(135deg, #0073CE 0%, #00569a 100%);
     box-shadow: 0 10px 20px rgba(0,0,0,0.2);
     color: white;
-    transition: all 0.3s ease;
   }
 
   .stock-info {
@@ -81,18 +80,6 @@
     font-weight: 600;
     margin-top: 4px;
   }
-
-  /* Pulse animation for loading */
-  .loading {
-    opacity: 0.6;
-    animation: pulse 1.5s infinite;
-  }
-
-  @keyframes pulse {
-    0% { opacity: 0.6; }
-    50% { opacity: 1; }
-    100% { opacity: 0.6; }
-  }
 </style>
 </head>
 <body>
@@ -100,7 +87,7 @@
 <div class="card" id="stockCard">
   <div class="stock-info">
     <div>
-      <div class="symbol-label">BYD COMPANY</div>
+      <div class="symbol-label">BOYD GAMING (BYD)</div>
       <div class="price" id="price">USD --.--</div>
       <div id="change" class="change-up" style="font-weight: 600;">+0.00 (0.00%)</div>
     </div>
@@ -120,13 +107,13 @@
 </div>
 
 <script>
-  // YOUR SECURE WORKER URL
+  // Pointing to your secure proxy
   const PROXY_URL = 'https://stock-proxy.dennis-grant91.workers.dev';
-  // Using BYDDF for the EV Company (OTC)
-  const symbol = 'BYDDF'; 
+  
+  // Back to the NYSE ticker for Boyd Gaming
+  const symbol = 'BYD'; 
 
   async function fetchQuote() {
-    const card = document.getElementById('stockCard');
     const priceEl = document.getElementById('price');
     const priceValEl = document.getElementById('priceValue');
     const changeEl = document.getElementById('change');
@@ -134,16 +121,11 @@
     const arrowEl = document.getElementById('arrow');
 
     try {
-      // Step 1: Call your secure Cloudflare Worker
       const res = await fetch(`${PROXY_URL}?symbol=${symbol}`);
-      
-      if (!res.ok) throw new Error("Proxy Error");
-      
       const data = await res.json();
 
-      // Step 2: Safety check for data
       if (!data.c || data.c === 0) {
-        priceEl.textContent = "Market Closed";
+        priceEl.textContent = "Data Error";
         return;
       }
 
@@ -153,8 +135,7 @@
       const percent = ((change / previous) * 100).toFixed(2);
       const isUp = change >= 0;
 
-      // Step 3: Update all UI elements
-      const color = isUp ? 'lightgreen' : '#ff8787';
+      const color = isUp ? '#4ade80' : '#ff8787';
       const arrow = isUp ? '▲' : '▼';
       const prefix = isUp ? '+' : '';
 
@@ -170,21 +151,14 @@
       arrowEl.textContent = arrow;
       arrowEl.style.color = color;
 
-      // Remove loading state if it was there
-      card.classList.remove('loading');
-
     } catch (error) {
-      console.error('Stock Fetch Error:', error);
-      // Keep the last known values but dim the card to show it's stale
-      card.style.opacity = "0.7";
+      console.error('Fetch Error:', error);
+      priceEl.textContent = "Service Offline";
     }
   }
 
-  // Run immediately on load
   fetchQuote();
-
-  // Refresh every 5 minutes (300,000 milliseconds)
-  setInterval(fetchQuote, 300000);
+  setInterval(fetchQuote, 300000); // 5 min refresh
 </script>
 
 </body>
