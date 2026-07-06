@@ -103,8 +103,8 @@
 
   async function fetchQuote() {
     try {
-      const res = await fetch(`${PROXY_URL}?symbol=${symbol}`);
-      if (!res.ok) throw new Error("Network issue");
+      const res = await fetchWithTimeout(`${PROXY_URL}?symbol=${symbol}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       
       const rawData = await res.json();
       if (!rawData.c || rawData.c === 0) throw new Error("Invalid data");
@@ -122,6 +122,7 @@
 
       // Update the screen
       updateUI(stockData);
+      lastFetchTs = Date.now();
       console.log("Stock updated successfully.");
 
     } catch (err) {
@@ -131,14 +132,23 @@
   }
 
   // ON LOAD: Check if we have saved data first so it's never blank
-  const savedData = localStorage.getItem('last_byd_data');
-  if (savedData) {
-    updateUI(JSON.parse(savedData));
-  }
+  try {
+    const savedData = localStorage.getItem('last_byd_data');
+    if (savedData) updateUI(JSON.parse(savedData));
+  } catch (e) { /* corrupt cache — ignore, live fetch will overwrite it */ }
 
-  // Start the cycle
+  // Start the cycle — skip refreshes while the tab is hidden (saves API calls)
   fetchQuote();
-  setInterval(fetchQuote, 300000); // 5 minutes
+  setInterval(() => {
+    if (document.visibilityState === 'visible') fetchQuote();
+  }, REFRESH_MS);
+
+  // When the user returns to the tab, refresh immediately if data is stale
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && Date.now() - lastFetchTs > REFRESH_MS) {
+      fetchQuote();
+    }
+  });
 </script>
 
 </body>
