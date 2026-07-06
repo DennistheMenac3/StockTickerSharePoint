@@ -98,48 +98,99 @@
 </div>
 
 <script>
-  async function fetchWeather() {
+  const CACHE_KEY = 'hq_weather_cache';
+  const REFRESH_MS = 900000;      // 15 min refresh
+  const FETCH_TIMEOUT_MS = 8000;  // abort hung requests after 8s
+  const STALE_MS = REFRESH_MS;    // data older than one cycle counts as stale
+
+  // Icon mapping — resolved at render time so cached data maps the same way
+  function mapWeather(code, isDay) {
+    const weatherMap = {
+      0: { label: "Clear", icon: isDay ? "☀️" : "🌙" },
+      1: { label: "Mainly Clear", icon: isDay ? "🌤️" : "🌙" },
+      2: { label: "Partly Cloudy", icon: isDay ? "⛅" : "☁️" },
+      3: { label: "Overcast", icon: "☁️" },
+      45: { label: "Foggy", icon: "🌫️" },
+      51: { label: "Drizzle", icon: "🌦️" },
+      61: { label: "Rainy", icon: "🌧️" },
+      71: { label: "Snowy", icon: "❄️" },
+      95: { label: "Thunderstorm", icon: "⛈️" }
+    };
+    return weatherMap[code] || { label: "Clear", icon: "☀️" };
+  }
+
+  // Single UI updater — used by both the cache restore and live fetches
+  function updateUI(data) {
+    const result = mapWeather(data.code, data.isDay);
+    document.getElementById('temp').textContent = `${data.temp}°`;
+    document.getElementById('icon').textContent = result.icon;
+    document.getElementById('condition').textContent = result.label;
+    document.getElementById('feels-like').textContent = `Feels like ${data.feelsLike}°`;
+  }
+
+  // Fetch with a hard timeout so a hung request can't stall the cycle
+  async function fetchWithTimeout(url) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
     try {
-      // Precise Coordinates for Boyd HQ (Rainbow & Post Rd area)
-      const lat = 36.071;
-      const lon = -115.243;
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weather_code,is_day&timezone=auto`;
-      
-      const res = await fetch(url);
-      const data = await res.json();
-      
-      const currentTemp = Math.round(data.current.temperature_2m);
-      const feelsLike = Math.round(data.current.apparent_temperature);
-      const isDay = data.current.is_day;
-      const code = data.current.weather_code;
-
-      // Icon mapping (Cooler, high-end emoji versions)
-      const weatherMap = {
-        0: { label: "Clear", icon: isDay ? "☀️" : "🌙" },
-        1: { label: "Mainly Clear", icon: isDay ? "🌤️" : "🌙" },
-        2: { label: "Partly Cloudy", icon: isDay ? "⛅" : "☁️" },
-        3: { label: "Overcast", icon: "☁️" },
-        45: { label: "Foggy", icon: "🌫️" },
-        51: { label: "Drizzle", icon: "🌦️" },
-        61: { label: "Rainy", icon: "🌧️" },
-        71: { label: "Snowy", icon: "❄️" },
-        95: { label: "Thunderstorm", icon: "⛈️" }
-      };
-
-      const result = weatherMap[code] || { label: "Clear", icon: "☀️" };
-
-      document.getElementById('temp').textContent = `${currentTemp}°`;
-      document.getElementById('icon').textContent = result.icon;
-      document.getElementById('condition').textContent = result.label;
-      document.getElementById('feels-like').textContent = `Feels like ${feelsLike}°`;
-
-    } catch (err) {
-      console.error("Weather Error:", err);
+      return await fetch(url, { signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
     }
   }
 
-  fetchWeather();
-  setInterval(fetchWeather, 900000); // 15 min refresh
+  // Weather now routes through your Cloudflare Worker (same pattern as the
+  // stock ticker). Coordinates live in the worker; update the URL after deploy.
+  const PROXY_URL = 'https://weather-proxy.dennis-grant91.workers.dev';
+
+  async function fetchWeather() {
+    try {
+      const res = await fetchWithTimeout(PROXY_URL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      const payload = {
+        temp: Math.round(data.current.temperature_2m),
+        feelsLike: Math.round(data.current.apparent_temperature),
+        code: data.current.weather_code,
+        isDay: data.current.is_day,
+        ts: Date.now()
+      };
+
+      // Save so a refresh or failed fetch never shows a blank card
+      localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
+      updateUI(payload);
+
+    } catch (err) {
+      // IF FAIL: do nothing to the UI. The cached values stay on screen.
+      console.warn("Weather fetch failed, keeping previous data:", err);
+    }
+  }
+
+  // ON LOAD: render saved data first so it's never blank
+  let lastFetchTs = 0;
+  try {
+    const saved = JSON.parse(localStorage.getItem(CACHE_KEY));
+    if (saved) {
+      updateUI(saved);
+      lastFetchTs = saved.ts || 0;
+    }
+  } catch (e) { /* corrupt cache — ignore, live fetch will overwrite it */ }
+
+  // Start the cycle — skip refreshes while the tab is hidden (saves API calls)
+  fetchWeather().then(() => { lastFetchTs = Date.now(); });
+  setInterval(() => {
+    if (document.visibilityState === 'visible') {
+      fetchWeather().then(() => { lastFetchTs = Date.now(); });
+    }
+  }, REFRESH_MS);
+
+  // When the user returns to the tab, refresh immediately if data is stale
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && Date.now() - lastFetchTs > STALE_MS) {
+      fetchWeather().then(() => { lastFetchTs = Date.now(); });
+    }
+  });
 </script>
 
 </body>
